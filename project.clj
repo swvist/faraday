@@ -1,7 +1,7 @@
-(defproject com.taoensso/faraday "1.10.0-alpha1"
+(defproject swvist/faraday "1.10.0-alpha1+transactions"
   :author "Peter Taoussanis <https://www.taoensso.com>"
-  :description "Clojure DynamoDB client"
-  :url "https://github.com/ptaoussanis/faraday"
+  :description "Clojure DynamoDB client with transaction support"
+  :url "https://github.com/swvist/faraday"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo
