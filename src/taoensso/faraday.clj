@@ -378,19 +378,24 @@
     {}
     ccs))
 
+(defn- request-id [result]
+  (.getRequestId (.getSdkResponseMetadata result)))
+
 (defprotocol AsMap (as-map [x]))
 
 (defmacro ^:private am-item-result [result get-form]
   `(when-let [get-form# ~get-form]
      (with-meta (db-item->clj-item get-form#)
-       {:cc-units (cc-units (.getConsumedCapacity ~result))})))
+       {:cc-units (cc-units (.getConsumedCapacity ~result))
+        :request-id (request-id ~result)})))
 
 (defmacro ^:private am-query|scan-result [result & [meta]]
   `(let [result# ~result]
      (merge {:items (mapv db-item->clj-item (.getItems result#))
              :count (.getCount result#)
              :cc-units (cc-units (.getConsumedCapacity result#))
-             :last-prim-kvs (as-map (.getLastEvaluatedKey result#))}
+             :last-prim-kvs (as-map (.getLastEvaluatedKey result#))
+             :request-id (request-id result#)}
             ~meta)))
 
 (extend-protocol AsMap
@@ -423,21 +428,25 @@
   (as-map [r]
     {:items       (utils/keyword-map as-map (.getResponses r))
      :unprocessed (.getUnprocessedKeys r)
-     :cc-units    (batch-cc-units (.getConsumedCapacity r))})
+     :cc-units    (batch-cc-units (.getConsumedCapacity r))
+     :request-id (request-id r)})
 
   BatchWriteItemResult
   (as-map [r]
     {:unprocessed (.getUnprocessedItems r)
-     :cc-units    (batch-cc-units (.getConsumedCapacity r))})
+     :cc-units    (batch-cc-units (.getConsumedCapacity r))
+     :request-id  (request-id r)})
 
   TransactWriteItemsResult
   (as-map [r] (when-let [cc (.getConsumedCapacity r)]
-                {:cc-units (batch-cc-units cc)}))
+                {:cc-units (batch-cc-units cc)
+                 :request-id (request-id r)}))
 
   TransactGetItemsResult
   (as-map [r]
     {:items (mapv #(utils/keyword-map as-map (.getItem ^ItemResponse %)) (.getResponses r))
-     :cc-units (batch-cc-units (.getConsumedCapacity r))})
+     :cc-units (batch-cc-units (.getConsumedCapacity r))
+     :request-id  (request-id r)})
 
   TableDescription
   (as-map [d]
